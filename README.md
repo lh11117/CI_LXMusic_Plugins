@@ -1,0 +1,2 @@
+# CI_LXMusic_Plugins
+在ClassIsland中获取并显示LX Music的歌词
