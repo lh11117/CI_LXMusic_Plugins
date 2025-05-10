@@ -13,9 +13,23 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="img1.png" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="ClassIsland.PluginSdk" Version="$(ClassIslandPluginSdkVersion)">
 			<ExcludeAssets>runtime; native</ExcludeAssets>
 		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="img1.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="MusicControlNext.xaml.cs">
+	    <SubType>Code</SubType>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
