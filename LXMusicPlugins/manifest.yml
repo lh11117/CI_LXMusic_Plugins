@@ -7,6 +7,6 @@ name: LXMusic歌词
 description: 在ClassIsland中获取并显示LX Music的歌词
 entranceAssembly: "LXMusicPlugins.dll"
 url: https://github.com/lh11117/CI_LXMusic_Plugins
-version: 1.0.0.0
+version: 1.0.0.1
 apiVersion: 1.6.0
 author: lh11117

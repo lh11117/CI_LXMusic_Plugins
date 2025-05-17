@@ -39,18 +39,13 @@ namespace LXMusicPlugins
         ConfigPath c = new();
         Tools t = new();
         public Settings Settings { get; set; } = new();
-        public MusicControl()
+
+        async private void StartGetLyric(object? sender, EventArgs? e)
         {
-            InitializeComponent();
-
-            Settings = ConfigureFileHelper.LoadConfig<Settings>(c.Get());
-
-            var app = AppBase.Current;
-
-            app.AppStarted += async (o, e) =>
+            try
             {
                 var client = new HttpClient();
-                using HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, 
+                using HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post,
                     "http://" + Settings.IP + ":" + Settings.Port + "/subscribe-player-status?filter=lyricLineText");
                 var response = await client.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead);
                 await using var stream = await response.Content.ReadAsStreamAsync();
@@ -68,22 +63,44 @@ namespace LXMusicPlugins
                     if (buff.EndsWith("\n\n"))
                     {
 #if a
-                        try
-                        {
+                    try
+                    {
 #endif
-                            Console.WriteLine(buff.ToString());
-                            SSE sse = t.SSE_Load(buff.ToString().Trim('\n'));
-                            Debug.Assert(sse.Event == "lyricLineText"); 
-                            LxText.Text = sse.str;
-                            //Console.WriteLine("获取歌词: "+sse.str);
+                        //Console.WriteLine(buff.ToString());
+                        SSE sse = t.SSE_Load(buff.ToString().Trim('\n'));
+                        Debug.Assert(sse.Event == "lyricLineText");
+                        LxText.Text = sse.str;
+                        //Console.WriteLine("获取歌词: "+sse.str);
 #if a
-                        }
-                        catch (Exception) { }
+                    }
+                    catch (Exception) { }
 #endif
                         buff = "";
                     }
                 }
-            };
+            }
+            catch (Exception)
+            {
+                for (int i = 5; i > 0; i--)
+                {
+                    LxText.Text = "⚠获取出错, " + i + "s后重试⚠";
+                    await Task.Delay(1000);
+                }
+                LxText.Text = "🚀正在重试...🚀";
+                StartGetLyric(sender, e);
+                return;
+            }
+        }
+
+        public MusicControl()
+        {
+            InitializeComponent();
+
+            Settings = ConfigureFileHelper.LoadConfig<Settings>(c.Get());
+
+            var app = AppBase.Current;
+
+            app.AppStarted += StartGetLyric;
         }
     }
 }
