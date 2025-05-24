@@ -2,6 +2,7 @@
 using ClassIsland.Core.Abstractions.Controls;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Shared.Helpers;
+using MahApps.Metro.Controls;
 using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.Generic;
@@ -39,14 +40,16 @@ namespace LXMusicPlugins
         ConfigPath c = new();
         Tools t = new();
         public Settings Settings { get; set; } = new();
+        System.Timers.Timer timer = new System.Timers.Timer();
 
         async private void StartGetLyric(object? sender, EventArgs? e)
         {
+            Dictionary<int, string> NextLRC = null;
             try
             {
                 var client = new HttpClient();
                 using HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post,
-                    "http://" + Settings.IP + ":" + Settings.Port + "/subscribe-player-status?filter=progress");
+                    "http://" + Settings.IP + ":" + Settings.Port + "/subscribe-player-status?filter=progress,status,name");
                 var response = await client.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead);
                 await using var stream = await response.Content.ReadAsStreamAsync();
                 var streamReader = new System.IO.StreamReader(stream);
@@ -68,15 +71,44 @@ namespace LXMusicPlugins
 #endif
                         //Console.WriteLine(buff.ToString());
                         SSE sse = t.SSE_Load(buff.ToString().Trim('\n'));
-                        Debug.Assert(sse.Event == "progress");
-                        String LRC = "";
-                        {
-                            HttpClient Client = new();
-                            HttpResponseMessage Response = await client.GetAsync("http://" + Settings.IP + ":" + Settings.Port + "/lyric");
-                            Response.EnsureSuccessStatusCode();
-                            LRC = await Response.Content.ReadAsStringAsync();
+                        if (sse.Event == "name")
+                        {    // 换歌了，刷新LRC
+                            String LRC = "";
+                            {
+                                HttpClient Client = new();
+                                HttpResponseMessage Response = await Client.GetAsync("http://" + Settings.IP + ":" + Settings.Port + "/lyric");
+                                Response.EnsureSuccessStatusCode();
+                                LRC = await Response.Content.ReadAsStringAsync();
+                            }
+                            NextLRC = t.LRC_Load(LRC);
                         }
-                        LxText.Text = t.FindNextSong(t.LRC_Load(LRC), (int)(sse.num * 1000));
+                        else if (sse.Event == "progress")
+                        {
+                            if (NextLRC == null)
+                            {
+                                String LRC = "";
+                                {
+                                    HttpClient Client = new();
+                                    HttpResponseMessage Response = await Client.GetAsync("http://" + Settings.IP + ":" + Settings.Port + "/lyric");
+                                    Response.EnsureSuccessStatusCode();
+                                    LRC = await Response.Content.ReadAsStringAsync();
+                                }
+                                NextLRC = t.LRC_Load(LRC);
+                            }
+
+                            if (sse.num != null) LxText.Text = t.FindNextSong(NextLRC, (int)(sse.num * 1000));
+                            else LxText.Text = "获取失败";
+
+                            if (Settings.SecondTime > 0) timer.Stop();
+                        } else if (sse.Event == "status")
+                        {
+                            if (sse.str == "paused" || sse.str == "stoped")
+                            {
+                                Console.WriteLine("好机会！");
+                                if (Settings.SecondTime > 0) timer.Start();
+                                else if (Settings.SecondTime == 0) LxText.Text = "";
+                            }
+                        }
 #if a
                     }
                     catch (Exception) { }
@@ -103,6 +135,21 @@ namespace LXMusicPlugins
             InitializeComponent();
 
             Settings = ConfigureFileHelper.LoadConfig<Settings>(c.Get());
+
+            if (Settings.SecondTime > 0)
+            {
+                timer.Interval = Settings.SecondTime;
+                timer.AutoReset = false;
+                timer.Enabled = true;
+                timer.Elapsed += new System.Timers.ElapsedEventHandler((o, e) =>
+                {
+                    Console.WriteLine("就是现在！！！");
+                    this.Invoke(new Action(() => {
+                        LxText.Text = "";
+                    }));
+                });
+            }
+            else timer.Enabled = false;
 
             var app = AppBase.Current;
 

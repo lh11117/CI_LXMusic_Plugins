@@ -27,7 +27,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock FontSize="16">请输入IP地址:</TextBlock>
-                <TextBox HorizontalAlignment="Right" Margin="0,0,10,0" Width="200px" Text="127.0.0.1" Name="IP" TextChanged="On_TextChanged"></TextBox>
+                <TextBox HorizontalAlignment="Right" Margin="0,0,10,0" Width="200px" Text="127.0.0.1" Name="IP"></TextBox>
             </Grid>
             <Grid Margin="10,10,10,10">
                 <Grid.ColumnDefinitions>
@@ -35,7 +35,23 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock FontSize="16">请输入端口:</TextBlock>
-                <TextBox HorizontalAlignment="Right" Margin="0,0,10,0" Width="200px" Text="23330" Name="Port" TextChanged="On_TextChanged"></TextBox>
+                <TextBox HorizontalAlignment="Right" Margin="0,0,10,0" Width="200px" Text="23330" Name="Port"></TextBox>
+            </Grid>
+            <Grid Margin="10,10,10,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock FontSize="16">暂停多少毫秒后隐藏歌词？(0=暂停后立即隐藏, 负数=不启用)</TextBlock>
+                <TextBox HorizontalAlignment="Right" Margin="0,0,10,0" Width="200px" Text="-1" Name="SecondTime"></TextBox>
+            </Grid>
+            <Grid Margin="10,10,10,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock FontSize="16">上课时暂停播放（暂时不可用）</TextBlock>
+                <ToggleButton HorizontalAlignment="Right" Margin="0,0,10,0" Name="PauseOnClass"></ToggleButton>
             </Grid>
             <Grid Margin="10,10,10,10">
                 <Grid.ColumnDefinitions>
@@ -46,9 +62,10 @@
                 <Button Width="150px" HorizontalAlignment="Right" Margin="0,0,175,0" Click="Button_Click_1">一键填写默认</Button>
                 <Button Width="150px" HorizontalAlignment="Right" Click="Button_Click">测试获取歌词</Button>
             </Grid>
-            <TextBlock Foreground="Red" FontSize="20" Margin="0,0,0,0">设置完成后, 请务必测试歌词是否获取正常! 设置完成后请重启程序! </TextBlock>
+            <TextBlock Foreground="Red" FontSize="20" Margin="0,0,0,0">设置完成后, 请务必测试歌词是否获取正常! 设置完成后请重启程序(因为特性)! </TextBlock>
             <TextBlock Foreground="Red" FontSize="20" Margin="0,20,0,0">如果获取歌词失败, 请检查下面的设置是否勾选上: </TextBlock>
             <Image Source="pack://application:,,,/LXMusicPlugins;component/img1.png"/>
+            <TextBlock Foreground="Red" FontSize="20" Margin="0,20,0,0">在报告bug以前, 请多重启几次CI, 因为有的特性(不是bug)重启以后自然就解决了, 如果仍然存在, 再请报告</TextBlock>
         </StackPanel>
     </ScrollViewer>
 </ci:SettingsPageBase>

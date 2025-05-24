@@ -22,6 +22,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.IO;
 using ClassIsland.Core;
+using System.Drawing.Printing;
 
 namespace LXMusicPlugins
 {
@@ -34,6 +35,7 @@ namespace LXMusicPlugins
         Tools t = new();
         ConfigPath c = new();
         public Settings Settings { get; set; } = new();
+        private bool SaveSettings = true;
         public SettingsPage()
         {
             InitializeComponent();
@@ -43,6 +45,23 @@ namespace LXMusicPlugins
             //{
             //    ConfigureFileHelper.SaveConfig<Settings>(c.Get(), Settings);  // 保存配置文件
             //};
+
+            SaveSettings = false;   // 巴哥警告()
+            IP.Text = Settings.IP;
+            Port.Text = Settings.Port;
+            SecondTime.Text = Settings.SecondTime.ToString();
+            PauseOnClass.IsChecked = Settings.PauseOnClass;
+            SaveSettings = true;
+            IP.TextChanged += WriteSettings;
+            Port.TextChanged += WriteSettings;
+            SecondTime.TextChanged += WriteSettings;
+            PauseOnClass.Checked += WriteSettings2;
+            PauseOnClass.Unchecked += WriteSettings2;
+        }
+
+        private void WriteSettings2(object sender, RoutedEventArgs e)
+        {
+            WriteSettings(null, null);
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
@@ -83,12 +102,18 @@ namespace LXMusicPlugins
             }
         }
 
-        private void On_TextChanged(object sender, TextChangedEventArgs e)
+        private void WriteSettings(object sender, TextChangedEventArgs e)
         {
-            if (IP != null && IP.Text != null && Port != null && Port.Text != null)
+            if (SaveSettings && IP != null && IP.Text != null && Port != null && Port.Text != null && SecondTime != null && SecondTime.Text != null && PauseOnClass != null && PauseOnClass.IsChecked != null)
             {
                 Settings.IP = IP.Text;
                 Settings.Port = Port.Text;
+                Settings.PauseOnClass = (bool)PauseOnClass.IsChecked;
+                try
+                {
+                    Settings.SecondTime = int.Parse(SecondTime.Text);
+                }
+                catch (Exception) { }
                 ConfigureFileHelper.SaveConfig<Settings>(c.Get(), Settings);
                 Console.WriteLine(c.Get());
             }

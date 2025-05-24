@@ -11,6 +11,8 @@ using System.IO;
 using System.Reflection;
 using Google.Protobuf.WellKnownTypes;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Net.Http;
+using ClassIsland.Shared;
 
 namespace LXMusicPlugins
 {
@@ -18,6 +20,8 @@ namespace LXMusicPlugins
     {
         public String IP { get; set; } = "127.0.0.1";
         public String Port { get; set; } = "23330";
+        public int SecondTime { get; set; } = -1;
+        public bool PauseOnClass { get; set; } = false;
     }
 
     public class ConfigPath
@@ -53,6 +57,20 @@ namespace LXMusicPlugins
             {
                 ConfigureFileHelper.SaveConfig<Settings>(c.Get(), Settings);  // 保存配置文件
             };
+
+            /// todo: 修复下面触发不了的bug
+            //ILessonsService ser = IAppHost.GetService<ILessonsService>();
+            //ser.OnClass += async (o, e) =>
+            //{
+            //    Console.WriteLine("------------------------------------------触发");
+            //    if (Settings.PauseOnClass)
+            //    {
+            //        HttpClient Client = new();
+            //        HttpResponseMessage Response = await Client.GetAsync("http://" + Settings.IP + ":" + Settings.Port + "/pause");
+            //        Response.EnsureSuccessStatusCode();
+            //        await Response.Content.ReadAsStringAsync();
+            //    }
+            //};
         }
     }
 }
