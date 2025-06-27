@@ -42,7 +42,7 @@ namespace LXMusicPlugins
         public Settings Settings { get; set; } = new();
         System.Timers.Timer timer = new System.Timers.Timer();
 
-        async private void StartGetLyric(object? sender, EventArgs? e)
+        async private void StartGetLyric()
         {
             Dictionary<int, string> NextLRC = null;
             try
@@ -125,7 +125,7 @@ namespace LXMusicPlugins
                     await Task.Delay(1000);
                 }
                 LxText.Text = "🚀正在重试...🚀";
-                StartGetLyric(sender, e);
+                StartGetLyric();
                 return;
             }
         }
@@ -151,9 +151,7 @@ namespace LXMusicPlugins
             }
             else timer.Enabled = false;
 
-            var app = AppBase.Current;
-
-            app.AppStarted += StartGetLyric;
+            StartGetLyric();
         }
     }
 }

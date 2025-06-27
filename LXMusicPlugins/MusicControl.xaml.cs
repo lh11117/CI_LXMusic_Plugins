@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -44,19 +45,20 @@ namespace LXMusicPlugins
         System.Timers.Timer timer = new System.Timers.Timer();
         public Settings Settings { get; set; } = new();
 
-        async private void StartGetLyric(object? sender, EventArgs? e)
+        async private void StartGetLyric()
         {
             try
             {
                 var client = new HttpClient();
                 using HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post,
-                    "http://" + Settings.IP + ":" + Settings.Port + "/subscribe-player-status?filter=lyricLineText,status");
+                    "http://" + Settings.IP + ":" + Settings.Port + "/subscribe-player-status?filter=lyricLineText,status,progress");
                 var response = await client.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead);
                 await using var stream = await response.Content.ReadAsStreamAsync();
                 var streamReader = new System.IO.StreamReader(stream);
                 var buffer = new Memory<char>(new char[1]);
                 int writeLength = 0;
                 String buff = "";
+                bool isFirst = true;
                 while ((writeLength = await streamReader.ReadBlockAsync(buffer)) > 0)
                 {
                     if (writeLength < buffer.Length)
@@ -72,11 +74,14 @@ namespace LXMusicPlugins
 #endif
                         Console.WriteLine(buff.ToString());
                         SSE sse = t.SSE_Load(buff.ToString().Trim('\n'));
-                        Console.WriteLine("--event: " + sse.Event + "  --str: "+sse.str);
+                        Console.WriteLine("--event: " + sse.Event + "  --str: "+sse.str+"  --num: "+sse.num);
                         if (sse.Event == "lyricLineText")
                         {
-                            LxText.Text = sse.str;
-                            if (Settings.SecondTime > 0) timer.Stop();
+                            if (!isFirst)
+                            {
+                                LxText.Text = sse.str;
+                                if (Settings.SecondTime > 0) timer.Stop();
+                            }
                         }
                         else if (sse.Event == "status")
                         {
@@ -85,6 +90,19 @@ namespace LXMusicPlugins
                                 Console.WriteLine("好机会！");
                                 if (Settings.SecondTime > 0) timer.Start();
                                 else if (Settings.SecondTime == 0) LxText.Text = "";
+                            }
+                        }else if (sse.Event == "progress")
+                        {
+                            if (isFirst && sse.num != null)
+                            {
+                                isFirst = false;
+                                String LRC = "";
+                                HttpClient Client = new();
+                                HttpResponseMessage Response = await Client.GetAsync("http://" + Settings.IP + ":" + Settings.Port + "/lyric");
+                                Response.EnsureSuccessStatusCode();
+                                LRC = await Response.Content.ReadAsStringAsync();
+                                Console.WriteLine(LRC);
+                                LxText.Text = t.FindNextSong(t.LRC_Load(LRC), (int)(sse.num * 1000));
                             }
                         }
                         //Console.WriteLine("获取歌词: "+sse.str);
@@ -104,7 +122,7 @@ namespace LXMusicPlugins
                     await Task.Delay(1000);
                 }
                 LxText.Text = "🚀正在重试...🚀";
-                StartGetLyric(sender, e);
+                StartGetLyric();
                 return;
             }
         }
@@ -130,9 +148,7 @@ namespace LXMusicPlugins
             }
             else timer.Enabled = false;
 
-            var app = AppBase.Current;
-
-            app.AppStarted += StartGetLyric;
+            StartGetLyric();
         }
     }
 }
